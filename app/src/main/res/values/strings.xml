@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">WeatherAppDLC</string>
+    <string name="action_settings">Location Settings</string>
+    <string name="faren_unit">℉</string>
+</resources>

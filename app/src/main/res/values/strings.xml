@@ -2,4 +2,7 @@
     <string name="app_name">WeatherAppDLC</string>
     <string name="action_settings">Location Settings</string>
     <string name="faren_unit">℉</string>
+    <string name="up_arrow"><![CDATA[&uarr;]]></string>
+    <string name="down_arrow"><![CDATA[&darr;]]></string>
+    <string name="button_text">5 Days</string>
 </resources>

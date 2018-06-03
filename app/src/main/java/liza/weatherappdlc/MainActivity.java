@@ -39,12 +39,11 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
     private static final int REQUEST_PERMISSION_CODE = 101;
     TextView cityTV;
     TextView currentTV;
-    protected static WeatherResponse weatherResponse = null;
+    protected static WeatherResponse weatherResponse;
     private Location userLocation;
     private View coordinatedLayoutView;
     private FusedLocationProviderClient mFusedLocationClient;
     private ProgressDialog dialog;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,9 +74,6 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                    Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                            .setAction("Action", null).show();
-
                 if (weatherResponse != null) {
                     Intent intent = new Intent(MainActivity.this, DetailActivity.class);
                     startActivity(intent);

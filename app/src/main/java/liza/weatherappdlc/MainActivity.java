@@ -1,19 +1,15 @@
 package liza.weatherappdlc;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -24,15 +20,10 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationAvailability;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
@@ -46,14 +37,13 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity implements Callback<WeatherResponse> {
 
     private static final int REQUEST_PERMISSION_CODE = 101;
-    private static final long MIN_TIME_BW_UPDATES = 0;
-    private static final float MIN_DISTANCE_CHANGE_FOR_UPDATES = 100;
     TextView cityTV;
     TextView currentTV;
-    private WeatherResponse weatherResponse;
+    protected static WeatherResponse weatherResponse;
     private Location userLocation;
     private View coordinatedLayoutView;
     private FusedLocationProviderClient mFusedLocationClient;
+    private ProgressDialog dialog;
 
 
     @Override
@@ -67,9 +57,14 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
         cityTV = findViewById(R.id.city_textView);
         currentTV = findViewById(R.id.temperature_textView);
 
+        dialog = ProgressDialog.show(MainActivity.this, "",
+                "Loading. Please wait...", true);
+        dialog.show();
+
         //checking internet connection
         if (!isNetworkConnected()) {
             showMessage("Not Connected to Internet!");
+            dialog.dismiss();
             return;
         }
         //Getting User Location
@@ -82,7 +77,11 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
             public void onClick(View view) {
 //                    Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                            .setAction("Action", null).show();
-                showMessage("Loading 5 day Forecast...");
+
+                if (weatherResponse != null) {
+                    Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+                    startActivity(intent);
+                }
             }
         });
     }
@@ -90,23 +89,60 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
     private void getLastKnownLocation() {
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            dialog.dismiss();
             //request permission
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{
-                    Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_PERMISSION_CODE);
+                    Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSION_CODE);
+            //showMessage("No Permission!");
+
             return;
         }
 
-        mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+        mFusedLocationClient.getLocationAvailability().addOnFailureListener(this, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                dialog.dismiss();
+                showMessage("location Not Available!");
+
+            }
+        }).addOnSuccessListener(this, new OnSuccessListener<LocationAvailability>() {
+            @Override
+            public void onSuccess(LocationAvailability locationAvailability) {
+
+                //showMessage("location Available!");
+                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    //request permission
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                            Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSION_CODE);
+                    dialog.dismiss();
+                    return;
+                }
+                mFusedLocationClient.getLastLocation().addOnFailureListener(MainActivity.this, new OnFailureListener() {
                     @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            userLocation = location;
-                            requestWeatherInfo();
-                        }
+                    public void onFailure(@NonNull Exception e) {
+                        dialog.dismiss();
+                        showMessage("location Not found!");
                     }
-                });
+                })
+                        .addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location location) {
+                                // Got last known location. In some rare situations this can be null.
+                                if (location != null) {
+                                    userLocation = location;
+                                    requestWeatherInfo();
+                                } else {
+                                    showMessage("location Invalid!");
+                                    dialog.dismiss();
+                                }
+
+
+                            }
+                        });
+            }
+        });
+
     }
 
 
@@ -117,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
 
             case REQUEST_PERMISSION_CODE:
 
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                     showMessage("Permission Granted, Now your application can access GPS.");
                     getLastKnownLocation();
                 } else {
@@ -155,8 +191,6 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
     }
 
     private boolean isNetworkConnected() {
-        showMessage("Checking Network Connection...");
-
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
         return cm != null && cm.getActiveNetworkInfo() != null;
@@ -201,6 +235,7 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
                 //show failure message
                 showMessage("No response");
             }
+            dialog.dismiss();
 
         }
     }
@@ -208,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
     private void updateUI() {
         if(weatherResponse!=null) {
             cityTV.setText(weatherResponse.getCity().getName());
-            currentTV.setText(new StringBuilder().append(weatherResponse.getTemperatureList().get(0).getWeather().getTemp().toString()).append(getString(R.string.faren_unit)));
+            currentTV.setText(new StringBuilder().append(weatherResponse.getTemperatureList().get(0).getWeatherMain().getTemp().toString()).append(getString(R.string.faren_unit)));
         }
     }
 

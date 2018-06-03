@@ -5,6 +5,9 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class WeatherResponse {
 
@@ -63,5 +66,6 @@ public class WeatherResponse {
     public void setCity(City city) {
         this.city = city;
     }
+
 
 }

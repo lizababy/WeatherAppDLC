@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
     private static final int REQUEST_PERMISSION_CODE = 101;
     TextView cityTV;
     TextView currentTV;
-    protected static WeatherResponse weatherResponse;
+    protected static WeatherResponse weatherResponse = null;
     private Location userLocation;
     private View coordinatedLayoutView;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
         currentTV = findViewById(R.id.temperature_textView);
 
         dialog = ProgressDialog.show(MainActivity.this, "",
-                "Loading. Please wait...", true);
+                "Loading. Please wait...", false);
         dialog.show();
 
         //checking internet connection

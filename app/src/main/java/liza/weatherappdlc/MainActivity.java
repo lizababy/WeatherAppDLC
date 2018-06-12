@@ -19,6 +19,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -26,24 +27,29 @@ import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.squareup.picasso.Picasso;
 
 import java.net.InetAddress;
 
-import liza.weatherappdlc.Models.WeatherResponse;
+import liza.weatherappdlc.Api.ApiService;
+import liza.weatherappdlc.Api.RetrofitClient;
+import liza.weatherappdlc.Models.CurrentWeather;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements Callback<WeatherResponse> {
+public class MainActivity extends AppCompatActivity implements Callback<CurrentWeather> {
 
     private static final int REQUEST_PERMISSION_CODE = 101;
     TextView cityTV;
     TextView currentTV;
-    protected static WeatherResponse weatherResponse;
+    private ImageView imageView;
+    private CurrentWeather mCurrentWeather;
     private Location userLocation;
     private View coordinatedLayoutView;
     private FusedLocationProviderClient mFusedLocationClient;
     private ProgressDialog dialog;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
         coordinatedLayoutView = findViewById(R.id.coordinator_layout);
         cityTV = findViewById(R.id.city_textView);
         currentTV = findViewById(R.id.temperature_textView);
+        imageView = findViewById(R.id.imageView);
 
         dialog = ProgressDialog.show(MainActivity.this, "",
                 "Loading. Please wait...", false);
@@ -74,8 +81,10 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (weatherResponse != null) {
+                if (userLocation != null) {
                     Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+                    intent.putExtra(DetailActivity.LAT_INTENT_KEY, userLocation.getLatitude());
+                    intent.putExtra(DetailActivity.LON_INTENT_KEY, userLocation.getLongitude());
                     startActivity(intent);
                 }
             }
@@ -127,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
                                 // Got last known location. In some rare situations this can be null.
                                 if (location != null) {
                                     userLocation = location;
-                                    requestWeatherInfo();
+                                    requestCurrentWeatherInfo();
                                 } else {
                                     showMessage("location Invalid!");
                                     dialog.dismiss();
@@ -204,15 +213,15 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
         }
     }
 
-    private void requestWeatherInfo() {
+    private void requestCurrentWeatherInfo() {
 
         //make data request - api call
-        ApiService apiService = RetrofitClient.getApiService();
+        ApiService apiService = RetrofitClient.getApiService(this);
         //calling Json
         if(userLocation!=null) {
             Log.d("location", "requestedWeatherInfo");
 
-            Call<WeatherResponse> apiCall = apiService.getJson(userLocation.getLatitude(), userLocation.getLongitude());
+            Call<CurrentWeather> apiCall = apiService.getJsonCurrentWeather(userLocation.getLatitude(), userLocation.getLongitude(), this.getString(R.string.APP_ID));
 
             apiCall.enqueue(this);
         }
@@ -220,12 +229,10 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
 
 
     @Override
-    public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
-        //dismiss dialog
+    public void onResponse(Call<CurrentWeather> call, Response<CurrentWeather> response) {
         if(response.isSuccessful()){
             if (response.body() != null) {
-                weatherResponse = response.body();
-                //Log.d("response",weatherResponse.getCity().getName());
+                mCurrentWeather = response.body();
                updateUI();
             }else {
                 //show failure message
@@ -237,14 +244,18 @@ public class MainActivity extends AppCompatActivity implements Callback<WeatherR
     }
 
     private void updateUI() {
-        if(weatherResponse!=null) {
-            cityTV.setText(weatherResponse.getCity().getName());
-            currentTV.setText(new StringBuilder().append(weatherResponse.getTemperatureList().get(0).getWeatherMain().getTemp().toString()).append(getString(R.string.faren_unit)));
+        if(mCurrentWeather!=null) {
+            cityTV.setText(mCurrentWeather.getName());
+            currentTV.setText(new StringBuilder().append(mCurrentWeather.getMain().getTemp().toString()).append(getString(R.string.faren_unit)));
+            Picasso.get().load(getImageString(mCurrentWeather.getWeather().get(0).getIcon())).into(imageView);
         }
+    }
+    private String getImageString(String icon) {
+        return getString(R.string.IMAGE_URL_PATH)+icon+".png";
     }
 
     @Override
-    public void onFailure(Call<WeatherResponse> call, Throwable t) {
+    public void onFailure(Call<CurrentWeather> call, Throwable t) {
         //dismiss dialog
         //show failure message
         showMessage("Failed Network Request");

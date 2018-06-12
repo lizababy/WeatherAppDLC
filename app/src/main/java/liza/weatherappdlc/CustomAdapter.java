@@ -2,15 +2,12 @@ package liza.weatherappdlc;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
+import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
@@ -23,46 +20,57 @@ import java.util.Date;
 import java.util.Locale;
 
 import liza.weatherappdlc.Models.WeatherListItem;
-import liza.weatherappdlc.R;
 
-public class CustomAdapter extends ArrayAdapter<WeatherListItem> {
+public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
 
-
-    private final LayoutInflater mInflater;
     private final Context mContext;
-    private ArrayList<WeatherListItem> weatherForecast;
+    private ArrayList<WeatherListItem> temperatureList;
 
-    CustomAdapter(@NonNull Context context, @NonNull ArrayList<WeatherListItem> objects) {
-        super(context, 0, objects);
-
+    public CustomAdapter(@NonNull Context context, @NonNull ArrayList<WeatherListItem> objects) {
         mContext = context;
-        mInflater = LayoutInflater.from(context);
-        weatherForecast = objects;
+        temperatureList = objects;
     }
 
-    @Nullable
-    @Override
-    public WeatherListItem getItem(int position) {
-        return weatherForecast.get(position);
+    public void setData(ArrayList<WeatherListItem> list) {
+        temperatureList = list;
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+
+        private final ImageView imageView;
+        private final TextView textViewDateLine1;
+        private final TextView textViewDateLine2;
+        private final TextView textViewLowest;
+        private final TextView textViewHighest;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+
+            imageView = itemView.findViewById(R.id.imageView);
+            textViewDateLine1 = itemView.findViewById(R.id.textViewDateLine1);
+            textViewDateLine2 = itemView.findViewById(R.id.textViewDateLine2);
+            textViewLowest =  itemView.findViewById(R.id.textViewLowest);
+            textViewHighest = itemView.findViewById(R.id.textViewHighest);
+
+        }
     }
 
     @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        final ViewHolder viewHolder;
-        if(convertView == null){
-            View view = mInflater.inflate(R.layout.list_item_layout,parent,false);
-            viewHolder = ViewHolder.create((LinearLayout) view);
-            view.setTag(viewHolder);
-        }else{
-            viewHolder = (ViewHolder) convertView.getTag();
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.list_item_layout, parent, false);
 
-        }
+        return new ViewHolder(v);
+    }
 
-        WeatherListItem item = weatherForecast.get(position);
-        viewHolder.textViewDateLine1.setText(getDateString(item.getDtTxt(),"EEE, MMM dd"));
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
-        viewHolder.textViewDateLine2.setText(getDateString(item.getDtTxt(),"hh a"));
+        WeatherListItem item = temperatureList.get(position);
+        holder.textViewDateLine1.setText(getDateString(item.getDtTxt(),"EEE, MMM dd"));
+
+        holder.textViewDateLine2.setText(getDateString(item.getDtTxt(),"hh a"));
         StringBuilder lowestTemp = new StringBuilder(Html.fromHtml(mContext.getString(R.string.down_arrow)));
         lowestTemp.append(item.getWeatherMain().getTempMin().toString());
         lowestTemp.append(mContext.getString(R.string.faren_unit));
@@ -71,41 +79,17 @@ public class CustomAdapter extends ArrayAdapter<WeatherListItem> {
         highestTemp.append(item.getWeatherMain().getTempMax().toString());
         highestTemp.append(mContext.getString(R.string.faren_unit));
 
-        viewHolder.textViewLowest.setText(lowestTemp);
-        viewHolder.textViewHighest.setText(highestTemp);
-        viewHolder.imageView.setContentDescription(item.getWeatherSub().get(0).getDescription());
+        holder.textViewLowest.setText(lowestTemp);
+        holder.textViewHighest.setText(highestTemp);
+        holder.imageView.setContentDescription(item.getWeatherSub().get(0).getDescription());
 
-        Picasso.get().load(getImage(item.getWeatherSub().get(0).getIcon())).into(viewHolder.imageView);
-
-        return viewHolder.rootView;
+        Picasso.get().load(getImageString(item.getWeatherSub().get(0).getIcon())).into(holder.imageView);
 
     }
 
-    private static class ViewHolder {
-        final LinearLayout rootView;
-        final ImageView imageView;
-        final TextView textViewDateLine1;
-        final TextView textViewDateLine2;
-        final TextView textViewLowest;
-        final TextView textViewHighest;
-
-        private ViewHolder(LinearLayout rootView, ImageView imageView, TextView textViewDate1,TextView textViewDate2,TextView textViewLowest, TextView textViewHighest) {
-            this.rootView = rootView;
-            this.imageView = imageView;
-            this.textViewLowest = textViewLowest;
-            this.textViewHighest = textViewHighest;
-            this.textViewDateLine1 = textViewDate1;
-            this.textViewDateLine2 = textViewDate2;
-        }
-
-        static ViewHolder create(LinearLayout rootView) {
-            ImageView imageView = (ImageView) rootView.findViewById(R.id.imageView);
-            TextView textViewDateLine1 = (TextView) rootView.findViewById(R.id.textViewDateLine1);
-            TextView textViewDateLine2 = (TextView) rootView.findViewById(R.id.textViewDateLine2);
-            TextView textViewLowest = (TextView) rootView.findViewById(R.id.textViewLowest);
-            TextView textViewHighest = (TextView) rootView.findViewById(R.id.textViewHighest);
-            return new ViewHolder(rootView, imageView, textViewDateLine1,textViewDateLine2, textViewLowest,textViewHighest);
-        }
+    @Override
+    public int getItemCount() {
+        return temperatureList.size();
     }
     private String getDateString(String dateText, String format) {
         DateFormat originalFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
@@ -118,8 +102,9 @@ public class CustomAdapter extends ArrayAdapter<WeatherListItem> {
         }
         return targetFormat.format(date);
     }
-    private String getImage(String icon) {
-        return "http://openweathermap.org/img/w/"+icon+".png";
+    private String getImageString(String icon) {
+        return mContext.getString(R.string.IMAGE_URL_PATH)+icon+".png";
     }
+
 
 }

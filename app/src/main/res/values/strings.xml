@@ -4,5 +4,5 @@
     <string name="faren_unit">℉</string>
     <string name="up_arrow"><![CDATA[&uarr;]]></string>
     <string name="down_arrow"><![CDATA[&darr;]]></string>
-    <string name="button_text">5 Days</string>
+    <string name="button_text">Forecast</string>
 </resources>

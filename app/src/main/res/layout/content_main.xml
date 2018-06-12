@@ -16,18 +16,34 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
         android:textSize="30sp"
         android:typeface="normal"
-        app:layout_constraintBottom_toTopOf="@+id/temperature_textView"
+        app:layout_constraintBottom_toTopOf="@+id/temp_LL"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <TextView
-        android:id="@+id/temperature_textView"
-        android:layout_width="wrap_content"
+
+    <LinearLayout
+        android:id="@+id/temp_LL"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body2"
-        android:textSize="18sp"
+        android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="100dp"
+            android:layout_height="100dp" />
+
+        <TextView
+            android:id="@+id/temperature_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+            android:textSize="18sp"
+
+            />
+    </LinearLayout>
+
 </android.support.constraint.ConstraintLayout>

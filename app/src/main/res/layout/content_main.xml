@@ -44,7 +44,6 @@
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.AppCompat.Body2"
             android:textSize="18sp"
-
             />
     </LinearLayout>
 

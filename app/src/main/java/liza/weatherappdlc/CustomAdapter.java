@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import liza.weatherappdlc.Models.WeatherListItem;
+import liza.weatherappdlc.Models.WeatherSub;
 
 public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
 
@@ -68,40 +69,57 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
         WeatherListItem item = temperatureList.get(position);
-        holder.textViewDateLine1.setText(getDateString(item.getDtTxt(),"EEE, MMM dd"));
+        if(item != null) {
+            holder.textViewDateLine1.setText(getDateString(item.getDtTxt(), "EEE, MMM dd"));
 
-        holder.textViewDateLine2.setText(getDateString(item.getDtTxt(),"hh a"));
-        StringBuilder lowestTemp = new StringBuilder(Html.fromHtml(mContext.getString(R.string.down_arrow)));
-        lowestTemp.append(item.getWeatherMain().getTempMin().toString());
-        lowestTemp.append(mContext.getString(R.string.faren_unit));
+            holder.textViewDateLine2.setText(getDateString(item.getDtTxt(), "hh a"));
+            StringBuilder lowestTemp = new StringBuilder(Html.fromHtml(mContext.getString(R.string.down_arrow)));
+            lowestTemp.append(item.getWeatherMain().getTempMin().toString());
+            lowestTemp.append(mContext.getString(R.string.faren_unit));
 
-        StringBuilder highestTemp = new StringBuilder(Html.fromHtml(mContext.getString(R.string.up_arrow)));
-        highestTemp.append(item.getWeatherMain().getTempMax().toString());
-        highestTemp.append(mContext.getString(R.string.faren_unit));
+            StringBuilder highestTemp = new StringBuilder(Html.fromHtml(mContext.getString(R.string.up_arrow)));
+            highestTemp.append(item.getWeatherMain().getTempMax().toString());
+            highestTemp.append(mContext.getString(R.string.faren_unit));
 
-        holder.textViewLowest.setText(lowestTemp);
-        holder.textViewHighest.setText(highestTemp);
-        holder.imageView.setContentDescription(item.getWeatherSub().get(0).getDescription());
+            holder.textViewLowest.setText(lowestTemp);
+            holder.textViewHighest.setText(highestTemp);
 
-        Picasso.get().load(getImageString(item.getWeatherSub().get(0).getIcon())).into(holder.imageView);
+            WeatherSub weatherSubItem = getSubWeatherItem(item);
+            if(weatherSubItem != null) {
+                holder.imageView.setContentDescription(weatherSubItem.getDescription());
 
+                Picasso.get().load(getImageString(weatherSubItem.getIcon())).into(holder.imageView);
+            }
+        }
+
+    }
+
+    private WeatherSub getSubWeatherItem(WeatherListItem item) {
+
+        if(item.getWeatherSub().size() > 0){
+            return item.getWeatherSub().get(0);
+        }
+        else return null;
     }
 
     @Override
     public int getItemCount() {
         return temperatureList.size();
     }
-    private String getDateString(String dateText, String format) {
+
+    public static String getDateString(String dateText, String format) {
         DateFormat originalFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
         DateFormat targetFormat = new SimpleDateFormat(format,Locale.ENGLISH);
-        Date date = null;
+        Date date;
         try {
             date = originalFormat.parse(dateText);
         } catch (ParseException e) {
             e.printStackTrace();
+            return null;
         }
         return targetFormat.format(date);
     }
+
     private String getImageString(String icon) {
         return mContext.getString(R.string.IMAGE_URL_PATH)+icon+".png";
     }

@@ -14,7 +14,11 @@ buildscript {
         // in the individual module build.gradle files
     }
 }
+ext{
+    compileSdkVersion = 26
+    supportLibVersion = "27.1.1"
 
+}
 allprojects {
     repositories {
         google()

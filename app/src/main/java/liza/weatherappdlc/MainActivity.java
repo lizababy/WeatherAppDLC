@@ -42,12 +42,12 @@ public class MainActivity extends AppCompatActivity implements Callback<CurrentW
     TextView currentTV;
     private ImageView imageView;
     private CurrentWeather mCurrentWeather;
-    private Location mUserLocation;
+    protected Location mUserLocation;
     private View coordinatedLayoutView;
     private FusedLocationProviderClient mFusedLocationClient;
     private ProgressDialog dialog;
 
-    private OnSuccessListener<Location> mLocationListener = new OnSuccessListener<Location>() {
+    protected OnSuccessListener<Location> mLocationListener = new OnSuccessListener<Location>() {
         @Override
         public void onSuccess(Location location) {
             // Got last known location. In some rare situations this can be null.
